@@ -18,15 +18,17 @@
 
 package com.example.aplikasiuntukuts.data;
 
+import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import android.content.Context;
 import androidx.annotation.VisibleForTesting;
+import androidx.sqlite.db.SupportSQLiteDatabase;
 
-/**
- * The Room database.
- */
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 @Database(entities = {Cheese.class}, version = 1)
 public abstract class SampleDatabase extends RoomDatabase {
 
@@ -34,10 +36,30 @@ public abstract class SampleDatabase extends RoomDatabase {
      * @return The DAO for the Cheese table.
      */
     @SuppressWarnings("WeakerAccess")
+
     public abstract CheeseDao cheese();
+    private static final int NUMBER_OF_THREAD = 4;
+    static final ExecutorService databaseWriterExecutor =
+            Executors.newFixedThreadPool(NUMBER_OF_THREAD);
 
     /** The only instance */
     private static SampleDatabase sInstance;
+    private static RoomDatabase.Callback populateDatabaseCallback = new RoomDatabase.Callback(){
+        @Override
+        public void onOpen(@NonNull SupportSQLiteDatabase db) {
+            super.onOpen(db);
+            databaseWriterExecutor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    CheeseDao dao = sInstance.cheese();
+                    for (int i = 0; i < Cheese.CHEESES.length; i++) {
+                        Cheese data = new Cheese(Cheese.CHEESES[i]);
+                        dao.insert(data);
+                    }
+                }
+            });
+        }
+    };
 
     /**
      * Gets the singleton instance of SampleDatabase.
@@ -45,12 +67,15 @@ public abstract class SampleDatabase extends RoomDatabase {
      * @param context The context.
      * @return The singleton instance of SampleDatabase.
      */
+
+
     public static synchronized SampleDatabase getInstance(Context context) {
         if (sInstance == null) {
             sInstance = Room
                     .databaseBuilder(context.getApplicationContext(), SampleDatabase.class, "ex")
+                    .addCallback(populateDatabaseCallback)
                     .build();
-            sInstance.populateInitialData();
+//            sInstance.populateInitialData();
         }
         return sInstance;
     }
@@ -70,18 +95,12 @@ public abstract class SampleDatabase extends RoomDatabase {
      * Inserts the dummy data into the database if it is currently empty.
      */
     private void populateInitialData() {
-        if (cheese().count() == 0) {
-            runInTransaction(new Runnable() {
-                @Override
-                public void run() {
-                    Cheese cheese = new Cheese();
-                    for (int i = 0; i < Cheese.CHEESES.length; i++) {
-                        cheese.name = Cheese.CHEESES[i];
-                        cheese().insert(cheese);
-                    }
-                }
-            });
+        CheeseDao cheeseDao = sInstance.cheese();
+        Cheese cheese = new Cheese();
+
+        for (String name: Cheese.CHEESES){
+            cheese.setName(name);
+            cheeseDao.insert(cheese);
         }
     }
-
 }

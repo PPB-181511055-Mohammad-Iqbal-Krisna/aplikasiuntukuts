@@ -13,23 +13,24 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * iqbal
+ * 2b
  */
 
 
 package com.example.aplikasiuntukuts.data;
 
+import android.content.ContentValues;
+import android.provider.BaseColumns;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
-import android.content.ContentValues;
-import android.provider.BaseColumns;
 
-
-/**
- * Represents one record of the Cheese table.
- */
 @Entity(tableName = Cheese.TABLE_NAME)
 public class Cheese {
 
@@ -51,6 +52,28 @@ public class Cheese {
     @ColumnInfo(name = COLUMN_NAME)
     public String name;
 
+
+    @Ignore
+    public Cheese() {
+        this(0, "");
+    }
+    @Ignore
+    public Cheese(String name) {
+        this(0, name);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
     /**
      * Create a new {@link Cheese} from the specified {@link ContentValues}.
      *
@@ -68,6 +91,12 @@ public class Cheese {
         }
         return cheese;
     }
+
+    public Cheese(long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
 
     /** Dummy data. */
     static final String[] CHEESES = {
@@ -202,5 +231,10 @@ public class Cheese {
             "Xanadu", "Xynotyro", "Yarg Cornish", "Yarra Valley Pyramid", "Yorkshire Blue",
             "Zamorano", "Zanetti Grana Padano", "Zanetti Parmigiano Reggiano"
     };
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
 
 }

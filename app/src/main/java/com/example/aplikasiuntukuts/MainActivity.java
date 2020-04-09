@@ -19,33 +19,33 @@ package com.example.aplikasiuntukuts;
 
 import android.database.Cursor;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.loader.app.LoaderManager;
-import androidx.loader.content.CursorLoader;
-import androidx.loader.content.Loader;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.example.aplikasiuntukuts.data.Cheese;
+import com.example.aplikasiuntukuts.data.CheeseViewModel;
 import com.example.aplikasiuntukuts.provider.SampleContentProvider;
 
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * Not very relevant to Room. This just shows data from {@link SampleContentProvider}.
- *
- * <p>Since the data is exposed through the ContentProvider, other apps can read and write the
- * content in a similar manner to this.</p>
- */
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.CursorLoader;
+import androidx.loader.content.Loader;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int LOADER_CHEESES = 1;
 
+    private CheeseViewModel vm;
     private CheeseAdapter mCheeseAdapter;
 
     @Override
@@ -58,7 +58,15 @@ public class MainActivity extends AppCompatActivity {
         mCheeseAdapter = new CheeseAdapter();
         list.setAdapter(mCheeseAdapter);
 
-        LoaderManager.getInstance(this).initLoader(LOADER_CHEESES, null, mLoaderCallbacks);
+        vm = new ViewModelProvider(this).get(CheeseViewModel.class);
+        vm.getmAllCheese().observe(this, new Observer<List<Cheese>>() {
+            @Override
+            public void onChanged(List<Cheese> cheeses) {
+                mCheeseAdapter.setCheeses(cheeses);
+            }
+        });
+
+//        LoaderManager.getInstance(this).initLoader(LOADER_CHEESES, null, mLoaderCallbacks);
     }
 
     private final LoaderManager.LoaderCallbacks<Cursor> mLoaderCallbacks =
@@ -75,7 +83,17 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
-                    mCheeseAdapter.setCheeses(data);
+                    ArrayList<Cheese> dataCheese = new ArrayList<>();
+
+                    do {
+                        long id = data.getLong(data.getColumnIndex(Cheese.COLUMN_ID));
+                        String name = data.getString(data.getColumnIndex(Cheese.COLUMN_NAME));
+
+                        dataCheese.add(new Cheese(id, name));
+                    }
+                    while (data.moveToNext());
+
+                    mCheeseAdapter.setCheeses(dataCheese);
                 }
 
                 @Override
@@ -87,7 +105,9 @@ public class MainActivity extends AppCompatActivity {
 
     private static class CheeseAdapter extends RecyclerView.Adapter<CheeseAdapter.ViewHolder> {
 
-        private Cursor mCursor;
+//        private Cursor mCursor;
+
+        private List<Cheese> mCheese;
 
         @Override
         @NonNull
@@ -97,19 +117,19 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            if (mCursor.moveToPosition(position)) {
-                holder.mText.setText(mCursor.getString(
-                        mCursor.getColumnIndexOrThrow(Cheese.COLUMN_NAME)));
+            if (mCheese.get(position) != null) {
+                Cheese current = mCheese.get(position);
+                holder.mText.setText(current.getName());
             }
         }
 
         @Override
         public int getItemCount() {
-            return mCursor == null ? 0 : mCursor.getCount();
+            return mCheese == null ? 0 : mCheese.size();
         }
 
-        void setCheeses(Cursor cursor) {
-            mCursor = cursor;
+        void setCheeses(List<Cheese> cheeses) {
+            mCheese = cheeses;
             notifyDataSetChanged();
         }
 

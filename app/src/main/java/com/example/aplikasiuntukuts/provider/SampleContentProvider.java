@@ -36,12 +36,6 @@ import java.util.ArrayList;
 import java.util.concurrent.Callable;
 
 
-/**
- * A {@link ContentProvider} based on a Room database.
- *
- * <p>Note that you don't need to implement a ContentProvider unless you want to expose the data
- * outside your process or your application already uses a ContentProvider.</p>
- */
 public class SampleContentProvider extends ContentProvider {
 
     /** The authority of this content provider. */
@@ -93,6 +87,7 @@ public class SampleContentProvider extends ContentProvider {
             throw new IllegalArgumentException("Unknown URI: " + uri);
         }
     }
+
 
     @Nullable
     @Override
@@ -196,12 +191,6 @@ public class SampleContentProvider extends ContentProvider {
                 if (context == null) {
                     return 0;
                 }
-                final SampleDatabase database = SampleDatabase.getInstance(context);
-                final Cheese[] cheeses = new Cheese[valuesArray.length];
-                for (int i = 0; i < valuesArray.length; i++) {
-                    cheeses[i] = Cheese.fromContentValues(valuesArray[i]);
-                }
-                return database.cheese().insertAll(cheeses).length;
             case CODE_CHEESE_ITEM:
                 throw new IllegalArgumentException("Invalid URI, cannot insert with ID: " + uri);
             default:
